@@ -11,16 +11,17 @@ if (isset($_POST["login"])) {
     $password = $_POST["password"];
 
     try {
-        $stmt = $conn->prepare("SELECT username, password FROM user_admin WHERE username = '$username'");
+        $stmt = $conn->prepare("SELECT username, password, status_aktif FROM user WHERE username = '$username'");
         $stmt->execute();
 
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
         if ($result) {
             if (password_verify($password, $result['password'])) {
-
-                $_SESSION['login'] = true;
+                if($result['status_aktif'] == "1") {
+                    $_SESSION['login'] = true;
                 $_SESSION['username'] = $username;
                 header("Location: index.php");
+                } 
             }
         }
     } catch (PDOException $e) {

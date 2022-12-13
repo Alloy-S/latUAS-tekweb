@@ -6,13 +6,13 @@ if (!isset($_SESSION['login'])) {
 }
 
 $username = $_SESSION['username'];
-$stmt = $conn->prepare("SELECT nama_admin FROM user_admin WHERE username = '$username'");
+$stmt = $conn->prepare("SELECT nama_admin FROM user WHERE username = '$username'");
 $stmt->execute();
 
 $username = $stmt->fetch(PDO::FETCH_ASSOC);
 $username = $username['nama_admin'];
 
-$stmt = $conn->prepare("SELECT * FROM transaksi_resi_pengiriman");
+$stmt = $conn->prepare("SELECT * FROM pengiriman");
 $stmt->execute();
 
 $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -42,6 +42,29 @@ $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 $("#resi-log").val($(this).val());
             });
 
+            $("#submit-resi").click(function(e) {
+                e.preventDefault();
+                var dataResi = $("#entry-resi")
+
+                $.ajax({
+                    type: "POST",
+                    url: "entryNomorResi.php",
+                    data: dataResi.serialize(),
+                    success: function(response) {
+                        console.log(response);
+                        if (response == "eror") {
+                            // alert("eror");
+                            $("#eror-box").html("<div class='alert alert-danger mt-2' role='alert'>Nomor resi sudah ada</div>");
+                        } else {
+                            $('tbody').html(response);
+                        }
+                    },
+                    error: function(request, status, error) {
+                        alert(request.responseText);
+                    }
+                });
+            })
+
             $('body').on("click", ".delete", function() {
                 $.ajax({
                     type: "POST",
@@ -69,7 +92,7 @@ $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
             <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
                 <div class="navbar-nav">
                     <a class="nav-link active" aria-current="page" href="#">Data Resi Pengiriman</a>
-                    <a class="nav-link" href="#">User Admin</a>
+                    <a class="nav-link" href="adminSetting.php">User Admin</a>
                     <a class="nav-link" href="logout.php">Logout</a>
                 </div>
             </div>
@@ -83,7 +106,7 @@ $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
                 <div class="input-resi w-25 p-2">
                     <h1>Entry Nomor Resi</h1>
-                    <form action="entryNomorResi.php" method="POST">
+                    <form action="" id="entry-resi" method="POST">
                         <label for="tanggal">Tanggal</label>
                         <input type="date" name="tanggal" id="tanggal" class="form-control">
                         <label for="resi">Resi</label>
@@ -91,8 +114,10 @@ $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
                         <label for="jenis">Jenis Pengiriman</label>
                         <input type="text" class="form-control" name="jenis" id="jenis">
 
+                        <div id="eror-box"></div>
+
                         <div class="d-grid gap-2 mt-3">
-                            <button type="submit" class="btn btn-dark" name="submit">Entry</button>
+                            <button type="submit" class="btn btn-dark" name="submit" id="submit-resi">Entry</button>
                         </div>
                     </form>
                 </div>
@@ -107,12 +132,13 @@ $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
                         <tbody>
                             <?php foreach ($result as $row) : ?>
                                 <tr>
-                                    <td><?= $row['tanggal_resi']; ?></td>
+                                    <td><?= date($row['tanggal_resi']); ?></td>
                                     <td><?= $row['nomor_resi']; ?></td>
                                     <td>
-                                        <button type="button" class="btn btn-primary entry-log" data-bs-toggle="modal" data-bs-target="#exampleModal" value="<?= $row['nomor_resi']; ?>">
-                                            Entry Log
-                                        </button>
+                                        <a href="entryLogPage.php?resi=<?= $row["nomor_resi"]; ?>">
+                                            <button type="button" class="btn btn-primary entry-log">
+                                                Entry Log
+                                            </button></a>
                                         <button class="btn btn-danger delete" value="<?= $row['nomor_resi']; ?>">Delete</button>
                                     </td>
                                 </tr>
@@ -126,35 +152,7 @@ $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
         </div>
     </div>
 
-    <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h1 class="modal-title fs-5" id="exampleModalLabel">Entry Log <span id="judul-entry"></span></h1>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <form action="entrylog.php" method="POST">
-                    <div class="modal-body">
-
-                        <input type="hidden" name="resi-log" id="resi-log">
-                        <label for="tanggal">Tanggal</label>
-                        <input type="date" name="tanggal" id="tanggal" class="form-control">
-
-                        <label for="kota">Kota</label>
-                        <input type="text" class="form-control" name="kota" id="kota">
-
-                        <label for="keterangan">Keterangan</label>
-                        <input type="text" name="keterangan" id="keterangan" class="form-control">
-
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                        <button type="submit" class="btn btn-primary">Save changes</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
+    
 </body>
 
 </html>
